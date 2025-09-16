@@ -13,6 +13,9 @@
 #include "./game/NPC.h"
 #include "./game/level.h"
 #include "./game/floor.h"
+#include "./game/collision.h"
+#include "./game/player.h"
+
 
 float QUAD_VERTICES[] =
     {
@@ -54,9 +57,9 @@ Camera camera = {
     .free = false,
     .yaw = -135.0f,
     .pitch = -35.0f,
-    .speed = 2.0f,
+    .speed = 4.0f,
     .FOV = 70.0f,
-    .eye = VEC3(4.0f, 3.0f, 3.0f),
+    .eye = VEC3(0.0f, 1.0f, 0.0f),
     .center = VEC3(0.0f, 0.0f, 0.0f),
     .up = VEC3(0.0f, 1.0f, 0.0f)};
 
@@ -68,16 +71,23 @@ int main()
         .NPC_count = 1,
         .floor_count = 1,
         .light_count = 1,
+        .roof_count = 1,
         .wall_count = 4,
+        .collider_count = 2,
         .walls = {
             {.start_coordinates = {-5.0f, 0.0f, -5.0f}, .end_coordinates = {-5.0f, 4.0f, 5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
             {.start_coordinates = {-5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, 5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
             {.start_coordinates = {5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
             {.start_coordinates = {5.0f, 0.0f, -5.0f}, .end_coordinates = {-5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
         },
-        .lights = {{.color = VEC3(1.0f, 0.0f, 0.0f), .position = VEC3(-4.0f, 0.5f, -4.0f)}},
+        .lights = {{.color = VEC3(1.0f, 1.0f, 1.0f), .position = VEC3(0.0f, 0.0f, 0.0f)}},
         .floors = {{.start_coordinates = {-5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 0.0f, -5.0f}, .texture = load_texture("./resources/textures/floor_wood.png")}},
-        .npcs = {{.position = VEC3(0.0f, 1.0f, 0.0f), .texture = load_texture("./resources/textures/X.png")}},
+        .roofs = {{.start_coordinates = {-5.0f, 4.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/ceiling.png")}},
+        .colliders = {
+            {.dimensions = {0.005f, 4.0f, 10.0f}, .position = {-5.0f, 2.0f, 0.0f}},
+            {.dimensions = {0.005f, 4.0f, 10.0f}, .position = {5.0f, 2.0f, 0.0f}},
+        },
+        .npcs = {{.position = VEC3(0.0f, 0.5f, 0.0f), .texture = load_texture("./resources/textures/X.png")}},
     };
 
     save_level("./levels/level_test.bin", &level_test);
@@ -121,17 +131,14 @@ int main()
     unsigned int light_shader = load_shader("./resources/shaders/light.vert", "./resources/shaders/light.frag");
     unsigned int NPC_shader = load_shader("./resources/shaders/NPC.vert", "./resources/shaders/NPC.frag");
     unsigned int floor_shader = load_shader("./resources/shaders/floor.vert", "./resources/shaders/floor.frag");
+    unsigned int roof_shader = load_shader("./resources/shaders/roof.vert", "./resources/shaders/roof.frag");
+    unsigned int collider_shader = load_shader("./resources/shaders/colliders.vert", "./resources/shaders/colliders.frag");
 
     /*TEXTURES*/
 
     /*time*/
     float last_frame = 0.0f;
     float delta_time = 0.0f;
-
-    Floor floor_test = {
-        .start_coordinates = {-5.0f, -1.0f, 5.0f},
-        .end_coordinates = {5.0f, -1.0f, -5.0f},
-        .texture = load_texture("./resources/textures/floor_wood.png")};
 
     while (!glfwWindowShouldClose(window))
     {
@@ -141,12 +148,22 @@ int main()
         float current_frame = glfwGetTime();
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
+        Vec3 old_pos = camera.eye;
 
         process_keyboard_input(window, &camera, delta_time);
         camera_point(&camera, window, delta_time);
 
+        for (int i = 0; i < lev.collider_count; i++)
+        {
+            if (sphere_AABB_collision(camera.eye, 0.3f, lev.colliders[i]))
+            {
+                camera.eye = old_pos;
+                break;
+            }
+        }
+
         /*EVERYTHING*/
-        draw_level(&lev, &camera, wall_shader, floor_shader, light_shader, NPC_shader, quad_vao, light_vao);
+        draw_level(&lev, &camera, wall_shader, floor_shader, roof_shader, light_shader, NPC_shader, collider_shader, quad_vao, light_vao);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

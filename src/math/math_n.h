@@ -44,6 +44,7 @@ Vec3 vec3_negate(Vec3 v);
 float vec3_length(Vec3 v);
 float vec3_distance(Vec3 a, Vec3 b);
 float vec3_dot(Vec3 a, Vec3 b);
+Vec3 vec3_lerp(Vec3 a, Vec3 b, float t);
 
 /* ================================
    Vec4 Functions
@@ -71,5 +72,6 @@ Mat4 mat4_look_at(Vec3 eye, Vec3 center, Vec3 up);
    Miscellaneous
    ================================ */
 float radians(float deg);
+float clamp(float value, float min, float max);
 
 #endif

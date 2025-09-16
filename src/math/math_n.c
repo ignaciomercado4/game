@@ -112,6 +112,16 @@ float vec3_dot(Vec3 a, Vec3 b)
     return result;
 }
 
+// Lerp
+Vec3 vec3_lerp(Vec3 a, Vec3 b, float t)
+{
+    return (Vec3){
+        a.x + (b.x - a.x) * t,
+        a.y + (b.y - a.y) * t,
+        a.z + (b.z - a.z) * t
+    };
+}
+
 
 /* =============================
    Vector 4 (Vec4) functions
@@ -359,4 +369,11 @@ Mat4 mat4_look_at(Vec3 eye, Vec3 center, Vec3 up)
 float radians(float deg)
 {
     return deg * (MATH_PI / 180.0f);
+}
+
+float clamp(float value, float min, float max)
+{
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
 }
