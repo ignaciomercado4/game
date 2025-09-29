@@ -15,7 +15,7 @@
 #include "./game/floor.h"
 #include "./game/collision.h"
 #include "./game/player.h"
-
+#include "./game/projectile.h"
 
 float QUAD_VERTICES[] =
     {
@@ -68,7 +68,7 @@ int main()
     GLFWwindow *window = create_window(1920, 1080, "dajlsdkjad");
 
     Level level_test = {
-        .NPC_count = 1,
+        .NPC_count = 0,
         .floor_count = 1,
         .light_count = 1,
         .roof_count = 1,
@@ -77,7 +77,7 @@ int main()
         .walls = {
             {.start_coordinates = {-5.0f, 0.0f, -5.0f}, .end_coordinates = {-5.0f, 4.0f, 5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
             {.start_coordinates = {-5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, 5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
-            {.start_coordinates = {5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
+            {.start_coordinates = {5.0f, 0.0f, 5.0f}, .end_coordinates = {5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/floor_tiles.png")},
             {.start_coordinates = {5.0f, 0.0f, -5.0f}, .end_coordinates = {-5.0f, 4.0f, -5.0f}, .texture = load_texture("./resources/textures/wallpaper.png")},
         },
         .lights = {{.color = VEC3(1.0f, 1.0f, 1.0f), .position = VEC3(0.0f, 0.0f, 0.0f)}},
@@ -87,7 +87,7 @@ int main()
             {.dimensions = {0.005f, 4.0f, 10.0f}, .position = {-5.0f, 2.0f, 0.0f}},
             {.dimensions = {0.005f, 4.0f, 10.0f}, .position = {5.0f, 2.0f, 0.0f}},
         },
-        .npcs = {{.position = VEC3(0.0f, 0.5f, 0.0f), .texture = load_texture("./resources/textures/X.png")}},
+        .npcs = {},
     };
 
     save_level("./levels/level_test.bin", &level_test);
@@ -133,12 +133,22 @@ int main()
     unsigned int floor_shader = load_shader("./resources/shaders/floor.vert", "./resources/shaders/floor.frag");
     unsigned int roof_shader = load_shader("./resources/shaders/roof.vert", "./resources/shaders/roof.frag");
     unsigned int collider_shader = load_shader("./resources/shaders/colliders.vert", "./resources/shaders/colliders.frag");
+    unsigned int projectile_shader = load_shader("./resources/shaders/projectile.vert", "./resources/shaders/projectile.frag");
 
     /*TEXTURES*/
 
     /*time*/
     float last_frame = 0.0f;
     float delta_time = 0.0f;
+
+    Projectile bullet_test = {
+        .texture = load_texture("./resources/textures/bullet.png"),
+        .active = 1,
+        .direction = VEC3(0.0f, 0.0f, 0.0f),
+        .drop = 0.0f,
+        .lifetime = 9.0f,
+        .position = VEC3(0.0f, 2.0f, 0.0f),
+        .speed = 0.01f};
 
     while (!glfwWindowShouldClose(window))
     {
@@ -150,20 +160,37 @@ int main()
         last_frame = current_frame;
         Vec3 old_pos = camera.eye;
 
-        process_keyboard_input(window, &camera, delta_time);
         camera_point(&camera, window, delta_time);
+        process_keyboard_input(window, &camera, delta_time);
 
+        // Put this in a separate function later :P
         for (int i = 0; i < lev.collider_count; i++)
         {
-            if (sphere_AABB_collision(camera.eye, 0.3f, lev.colliders[i]))
+            Vec3 movement = vec3_sub(camera.eye, old_pos);
+            Vec3 testX = {camera.eye.x, old_pos.y, old_pos.z};
+            if (sphere_AABB_collision(testX, 0.3f, lev.colliders[i]))
             {
-                camera.eye = old_pos;
-                break;
+                camera.eye.x = old_pos.x;
+            }
+
+            Vec3 testZ = {old_pos.x, old_pos.y, camera.eye.z};
+            if (sphere_AABB_collision(testZ, 0.3f, lev.colliders[i]))
+            {
+                camera.eye.z = old_pos.z;
             }
         }
+        //
 
         /*EVERYTHING*/
         draw_level(&lev, &camera, wall_shader, floor_shader, roof_shader, light_shader, NPC_shader, collider_shader, quad_vao, light_vao);
+
+        vao_bind(quad_vao);
+        use_shader(projectile_shader);
+        set_mat4_uniform(projectile_shader, get_camera_view_matrix(camera), "u_V");
+        set_mat4_uniform(projectile_shader, get_camera_projection_matrix(camera), "u_P");
+
+        update_projectile(&bullet_test, delta_time);
+        draw_projectile(&bullet_test, projectile_shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

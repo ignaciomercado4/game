@@ -94,10 +94,10 @@ void draw_level(Level *self, Camera *camera,
     // draw_lights(self->lights, self->light_count, light_shader);
 
 
-    // Colliders
-    use_shader(collider_shader);
-    set_mat4_uniform(collider_shader, V, "u_V");
-    set_mat4_uniform(collider_shader, P, "u_P");
-    vao_bind(cube_vao);
-    draw_colliders(self->colliders, self->collider_count, collider_shader);
+    // // Colliders
+    // use_shader(collider_shader);
+    // set_mat4_uniform(collider_shader, V, "u_V");
+    // set_mat4_uniform(collider_shader, P, "u_P");
+    // vao_bind(cube_vao);
+    // draw_colliders(self->colliders, self->collider_count, collider_shader);
 }

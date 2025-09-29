@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "../game/camera.h"
 #include "../math/math_n.h"
+#include <stdio.h>
 
 void process_keyboard_input(GLFWwindow *window, Camera *camera, float delta_time)
 {
@@ -29,4 +30,6 @@ void process_keyboard_input(GLFWwindow *window, Camera *camera, float delta_time
         camera_move(camera, vec3_negate(camera->right), delta_time); 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera_move(camera, camera->right, delta_time);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        printf("Shot!\n");
 }
