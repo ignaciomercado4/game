@@ -15,7 +15,7 @@
 #include "./game/floor.h"
 #include "./game/collision.h"
 #include "./game/player.h"
-#include "./game/projectile.h"
+#include "./game/projectile_manager.h"
 
 float QUAD_VERTICES[] =
     {
@@ -141,14 +141,8 @@ int main()
     float last_frame = 0.0f;
     float delta_time = 0.0f;
 
-    Projectile bullet_test = {
-        .texture = load_texture("./resources/textures/bullet.png"),
-        .active = 1,
-        .direction = VEC3(0.0f, 0.0f, 0.0f),
-        .drop = 0.0f,
-        .lifetime = 9.0f,
-        .position = VEC3(0.0f, 2.0f, 0.0f),
-        .speed = 0.01f};
+    ProjectileManager pm_test;
+    init_projectiles(&pm_test);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -161,7 +155,8 @@ int main()
         Vec3 old_pos = camera.eye;
 
         camera_point(&camera, window, delta_time);
-        process_keyboard_input(window, &camera, delta_time);
+        process_keyboard_input(window, &camera, &lev, &pm_test, delta_time);
+        update_projectile(&pm_test, delta_time);
 
         // Put this in a separate function later :P
         for (int i = 0; i < lev.collider_count; i++)
@@ -183,15 +178,13 @@ int main()
 
         /*EVERYTHING*/
         draw_level(&lev, &camera, wall_shader, floor_shader, roof_shader, light_shader, NPC_shader, collider_shader, quad_vao, light_vao);
-
+        
         vao_bind(quad_vao);
         use_shader(projectile_shader);
-        set_mat4_uniform(projectile_shader, get_camera_view_matrix(camera), "u_V");
         set_mat4_uniform(projectile_shader, get_camera_projection_matrix(camera), "u_P");
-
-        update_projectile(&bullet_test, delta_time);
-        draw_projectile(&bullet_test, projectile_shader);
-
+        set_mat4_uniform(projectile_shader, get_camera_view_matrix(camera), "u_V");
+        draw_projectiles(&pm_test, projectile_shader);
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

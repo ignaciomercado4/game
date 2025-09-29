@@ -3,9 +3,12 @@
 #include <GLFW/glfw3.h>
 #include "../game/camera.h"
 #include "../math/math_n.h"
+#include "../game/projectile_manager.h"
+#include "../game/level.h"
+#include "../game/projectile_manager.h"
 #include <stdio.h>
 
-void process_keyboard_input(GLFWwindow *window, Camera *camera, float delta_time)
+void process_keyboard_input(GLFWwindow *window, Camera *camera, Level *level, ProjectileManager *pm, float delta_time)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
@@ -23,13 +26,25 @@ void process_keyboard_input(GLFWwindow *window, Camera *camera, float delta_time
     }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
         camera_move(camera, vec3_sub(camera->center, camera->eye), delta_time); 
+    }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
         camera_move(camera, vec3_negate(vec3_sub(camera->center, camera->eye)), delta_time);
+    }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
         camera_move(camera, vec3_negate(camera->right), delta_time); 
+    }  
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
         camera_move(camera, camera->right, delta_time);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        printf("Shot!\n");
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        Vec3 dir = vec3_normalize(vec3_sub(camera->center, camera->eye));
+        generate_projectile(pm, camera->eye, dir); 
+    }
+        
 }
